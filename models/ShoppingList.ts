@@ -20,7 +20,7 @@ const ShoppingListSchema = new mongoose.Schema({
 	createdAt: {
 		type: Date,
 		default: Date.now,
-		expires: 86400, // Automatically delete after 24 hours (86400 seconds)
+		expires: 60 * 60 * 24 * 7, // Automatically delete after 1 week
 	},
 	updatedAt: { type: Date, default: Date.now },
 });

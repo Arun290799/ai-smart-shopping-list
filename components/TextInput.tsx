@@ -157,26 +157,32 @@ export function TextInput() {
 	};
 
 	const parseItems = async (text: string): Promise<ShoppingItem[]> => {
-		const res = await fetch("/api/parse", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ input: text }),
-		});
+		try {
+			const res = await fetch("/api/parse", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ input: text }),
+			});
 
-		if (!res.ok) {
-			const errorData = await res.json().catch(() => ({}));
-			throw new Error(errorData.error || "Failed to parse items");
+			if (!res.ok) {
+				const errorData = await res.json().catch(() => ({}));
+				throw new Error(errorData.error || "Failed to parse items");
+			}
+
+			const data = await res.json();
+			console.log("data", data);
+
+			// Handle warning from API if content was filtered
+			if (data.warning) {
+				setRecognitionError(data.warning);
+			}
+
+			return data.items || [];
+		} catch (error) {
+			console.error(error);
+			setRecognitionError("Failed to parse items");
+			return [];
 		}
-
-		const data = await res.json();
-		console.log("data", data);
-
-		// Handle warning from API if content was filtered
-		if (data.warning) {
-			setRecognitionError(data.warning);
-		}
-
-		return data.items || [];
 	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -222,6 +228,12 @@ export function TextInput() {
 			setIsLoading(false);
 		}
 	};
+	const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+		if (e.key === "Enter" && !e.shiftKey) {
+			e.preventDefault();
+			handleSubmit(e);
+		}
+	};
 
 	return (
 		<form onSubmit={handleSubmit} className="w-full max-w-2xl mx-auto">
@@ -230,6 +242,7 @@ export function TextInput() {
 					<textarea
 						value={input}
 						onChange={handleInputChange}
+						onKeyDown={handleKeyDown}
 						placeholder="Enter items like: 2 litres milk, 5kg rice, baby diapers 40 pieces or click the microphone to use voice input"
 						className="w-full p-4 pr-12 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-gray-900 placeholder-gray-500"
 						rows={4}

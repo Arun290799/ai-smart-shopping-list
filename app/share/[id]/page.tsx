@@ -32,7 +32,7 @@ function SharedListContent() {
 				const response = await fetch(`/api/share?id=${shareId}`);
 
 				if (response.status === 410) {
-					setError("This shared list has expired (24-hour limit). Please create a new list.");
+					setError("This shared list has expired (1-week limit). Please create a new list.");
 					setIsLoading(false);
 					return;
 				}
@@ -168,7 +168,25 @@ function SharedListContent() {
 				{/* Header */}
 				<div className="text-center mb-8">
 					<h1 className="text-3xl font-bold text-gray-900 mb-2">Shared Shopping List</h1>
-					<p className="text-gray-600">Anyone with this link can view and edit this list</p>
+					<p className="text-gray-600 mb-4">Anyone with this link can view and edit this list</p>
+
+					{/* Data Expiration Notice */}
+					<div className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm font-medium">
+						<svg
+							className="w-4 h-4 mr-2 flex-shrink-0"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								strokeWidth={2}
+								d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+							/>
+						</svg>
+						<span>Data automatically removed after 1 week for privacy</span>
+					</div>
 				</div>
 
 				{/* Action Buttons */}
