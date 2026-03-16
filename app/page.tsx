@@ -23,8 +23,46 @@ function ShoppingListContent() {
 			try {
 				let savedShareId = localStorage.getItem("currentShareId");
 
-				if (!savedShareId) {
-					// Create a new share ID and empty list in database
+				if (savedShareId) {
+					// Set share ID immediately to unblock the page
+					setCurrentShareId(savedShareId);
+					setIsLoading(false); // Show content immediately
+
+					// Load from database in background
+					const listResponse = await fetch(`/api/share?id=${savedShareId}`);
+
+					if (listResponse.status === 410) {
+						// List expired, create new one
+						console.log("List expired, creating new one...");
+						localStorage.removeItem("currentShareId");
+
+						// Create new share ID
+						const createResponse = await fetch("/api/share", {
+							method: "POST",
+							headers: { "Content-Type": "application/json" },
+							body: JSON.stringify({ items: [] }),
+						});
+
+						if (createResponse.ok) {
+							const data = await createResponse.json();
+							const newShareId = data.shareId;
+							setCurrentShareId(newShareId);
+							localStorage.setItem("currentShareId", newShareId);
+							dispatch(setItems([]));
+						}
+					} else if (listResponse.ok) {
+						const data = await listResponse.json();
+						dispatch(setItems(data.items || []));
+
+						// Show warning if expiring soon
+						if (data.isExpiringSoon) {
+							console.warn(`List expires in ${data.hoursRemaining.toFixed(1)} hours`);
+						}
+					} else {
+						console.error("Failed to load list from database");
+					}
+				} else {
+					// No saved share ID, create new one
 					const response = await fetch("/api/share", {
 						method: "POST",
 						headers: { "Content-Type": "application/json" },
@@ -36,50 +74,16 @@ function ShoppingListContent() {
 						savedShareId = data.shareId;
 						setCurrentShareId(savedShareId);
 						localStorage.setItem("currentShareId", savedShareId!);
+						dispatch(setItems([]));
 					} else {
 						throw new Error("Failed to create share ID");
 					}
-				} else {
-					setCurrentShareId(savedShareId);
-				}
 
-				// Load the list from database using the share ID
-				const listResponse = await fetch(`/api/share?id=${savedShareId}`);
-
-				if (listResponse.status === 410) {
-					// List expired, create new one
-					console.log("List expired, creating new one...");
-					localStorage.removeItem("currentShareId");
-
-					// Create new share ID
-					const createResponse = await fetch("/api/share", {
-						method: "POST",
-						headers: { "Content-Type": "application/json" },
-						body: JSON.stringify({ items: [] }),
-					});
-
-					if (createResponse.ok) {
-						const data = await createResponse.json();
-						const newShareId = data.shareId;
-						setCurrentShareId(newShareId);
-						localStorage.setItem("currentShareId", newShareId);
-						dispatch(setItems([]));
-					}
-				} else if (listResponse.ok) {
-					const data = await listResponse.json();
-					dispatch(setItems(data.items || []));
-
-					// Show warning if expiring soon
-					if (data.isExpiringSoon) {
-						console.warn(`List expires in ${data.hoursRemaining.toFixed(1)} hours`);
-					}
-				} else {
-					console.error("Failed to load list from database");
+					setIsLoading(false); // Show content after creating new share ID
 				}
 			} catch (error) {
 				console.error("Error setting up share ID:", error);
-			} finally {
-				setIsLoading(false);
+				setIsLoading(false); // Show content even on error
 			}
 		};
 
