@@ -2,8 +2,8 @@ User-agent: *
 Allow: /
 
 # Sitemap locations
-Sitemap: ${process.env.NEXT_PUBLIC_BASE_URL}/sitemap.xml
-Sitemap: ${process.env.NEXT_PUBLIC_BASE_URL}/api/sitemap
+Sitemap: process.env.NEXT_PUBLIC_BASE_URL + "/sitemap.xml"
+Sitemap: process.env.NEXT_PUBLIC_BASE_URL + "/api/sitemap"
 
 # Block common non-content paths
 Disallow: /api/
